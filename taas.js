@@ -164,7 +164,7 @@ exports.listen = function(options) {
           } catch(ex) {}
 
           if (!responders[label]) responders[label] = [];
-          else while (responders[label].length > 5) {
+          else while (responders[label].length > 20) {
             try { (responders[label].shift()).socket.destroy(); } catch(ex) {}
           }
           responders[label].push({ socket: socket, tag: tag });
