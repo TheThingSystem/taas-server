@@ -87,18 +87,31 @@ var entry_text = function(entry) {
 };
 
 var validate_create_uuid = function() {
+  var i;
+
   var create   = document.forms.createUUIDForm
     , label    = create.label.value
+    , labels   = (!!create.labels.value) ? create.labels.value.split(' ') : []
     , uuid     = create.uuid.value
     ;
 
   if (!!label) label = label.replace(/^\s+|\s+$/g, '');
   if ((!label) || (label.length < 2) || (label.indexOf('&') !== -1)) return oops('invalid label parameter');
 
+  if (!!labels) {
+    for (i = 0; i < labels.length; i++) {
+      labels[i] = labels[i].replace(/^\s+|\s+$/g, '');
+      if ((labels[i].length < 2) || (labels[i].indexOf('&') !== -1) || (labels[i].indexOf(',') !== -1)) {
+        return oops('invalid labels parameter');
+      }
+    }
+  }
+  labels = labels.join(',');
+
   if (!!uuid) uuid = uuid.replace(/^\s+|\s+$/g, '');
   if ((!uuid) || (uuid.length < 32) || (uuid.indexOf('&') !== -1)) return oops('invalid UUID parameter');
 
-  roundtrip('action=create&uuid=' + uuid + '&label=' + label, function(results) {
+  roundtrip('action=create&uuid=' + uuid + '&label=' + label + '&labels=' + labels, function(results) {
     var entry, key, text;
 
     if (!!results.error) return oops(results.error.diagnostic);
@@ -200,6 +213,10 @@ var oops = function(message) {
     <td><input type='text'   name='label'    size='36' /></td>
     <td></td>
 </tr>
+<tr><td>Labels:</td>
+    <td><input type='text'   name='labels'   size='36' /></td>
+    <td></td>
+</tr>
 <tr><td></td>
     <td><input type='submit' value='Create Steward' /></td>
     <td></td>
@@ -215,6 +232,10 @@ var oops = function(message) {
 </tr>
 <tr><td>Password:</td>
     <td><input type='text'   name='password' size='36' /></td>
+    <td></td>
+</tr>
+<tr><td>&nbsp;</td>
+    <td></td>
     <td></td>
 </tr>
 <tr><td></td>

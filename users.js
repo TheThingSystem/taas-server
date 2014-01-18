@@ -88,7 +88,7 @@ client.on('ready', function() {
 });
 
 var perform = function(response, query) {
-  var label, password, results, username, uuid;
+  var i, label, labels, password, results, username, uuid;
 
   response.writeHead(200, { 'Content-Type': 'application/json' });
   switch (query.action) {
@@ -98,12 +98,14 @@ var perform = function(response, query) {
 
     case 'create':
       label = query.label.replace(/^\s+|\s+$/g, '');
+      labels = (!!query.labels) ? query.labels.split(',') : [];
+      for (i = 0; i < labels.length; i++) labels[i] = labels[i].replace(/^\s+|\s+$/g, '');
       uuid = normalize_uuid(query.uuid);
       if (!uuid) {
         results = { error: { permanent: true, diagnostic: 'invalid uuid parameter: ' + query.uuid } };
         break;
       }
-      create_uuid(label, uuid, function(err, reply) {/* jshint unused: false */
+      create_uuid(label, labels, uuid, function(err, reply) {/* jshint unused: false */
         if (err) {
           results = { error: { permanent: true, diagnostic: err.message } };
           return response.end(JSON.stringify(results));
@@ -219,7 +221,7 @@ var fetch = function(key, cb) {
   });
 };
 
-var create_uuid = function(label, uuid, cb) {
+var create_uuid = function(label, labels, uuid, cb) {
   var data, params, value;
 
   params = { length         : 40
@@ -234,11 +236,13 @@ var create_uuid = function(label, uuid, cb) {
   data.params.base32 = data.base32;
   data.params.protocol = 'totp';
 
+  if (labels.indexOf(label) === -1) labels.unshift(label);
+
   value = { uuid       : uuid
           , qrcodeURL  : data.google_auth_qr
           , authURL    : data.url()
           , authParams : data.params
-          , labels     : [ label ]
+          , labels     : labels
           };
 
   client.set(uuid, JSON.stringify(value), function(err, reply) {
@@ -247,7 +251,7 @@ var create_uuid = function(label, uuid, cb) {
     if (err) return;
 
     data.params.uuid   = [ uuid ];
-    data.params.labels = [ label ];
+    data.params.labels = labels;
     data.params.server = { hostname : options.taasHost
                          , port     : options.taasPort
                          , ca       : options.crtData
