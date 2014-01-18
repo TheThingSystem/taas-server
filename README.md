@@ -163,7 +163,7 @@ VPS Set-Up
 You do not need to have a domain name for your VPS;
 however, you must have a stable IP address (e.g., 'a.b.c.d').
 
-1. Get a [tarball](https://github.com/mrose17/TAAS-server/archive/master.zip) of this repostory onto your local system,
+1. Get a [tarball](https://github.com/TheThingSystem/TAAS-server/archive/master.zip) of this repostory onto your local system,
 extract it, and then:
 
         % cd TAAS-server-master
