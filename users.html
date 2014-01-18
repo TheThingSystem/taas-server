@@ -1,0 +1,240 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>simple totp management</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<style>
+  body {
+    font-family:monospace;
+    background: black;
+    color: white;
+  }
+</style>
+<script>
+var entries = {};
+
+var main = function() {
+  roundtrip('action=list', function(results) {
+    if (!!results.error) return oops(results.error.diagnostic);
+
+    entries = results.result.entries;
+    entries_text();
+  });
+  oops('listing...');
+};
+
+var roundtrip = function(params, cb) {
+  var xhr = new XMLHttpRequest();
+
+  xhr.onreadystatechange = function() {
+    var result;
+
+    if (xhr.readyState !== 4) return;
+    if (xhr.status !== 200) return oops('XHR status = ' + xhr.status);
+    try { result = JSON.parse (xhr.responseText); } catch(ex) { return oops('XHR parse = ' + ex.message); }
+    cb(result);
+  };
+
+  clear();
+  xhr.open('POST', '/?' + params, true);
+  xhr.send();
+};
+
+var entries_text = function() {
+  var key, text;
+
+  clear();
+
+  text = '';
+  for (key in entries) if (entries.hasOwnProperty(key)) text += entry_text(entries[key]);
+  if (text.length > 0) text = '<font size="+2"><strong>Entries:</strong></font><br/><table>' + text + '</table>';
+                  else text = '<font size="+2"><strong>No entries.</strong></font>';
+  document.getElementById('entries').innerHTML = text;
+};
+
+var entry_text = function(entry) {
+  if (entry.authParams.protocol === 'bcrypt') {
+    return '<tr><td colspan="3"><hr/></td></tr>'
+           + '<tr valign="top">'
+           + '<td rowspan="8">'                                                                  + '</td>'
+           +                  '<td>&nbsp;&nbsp;username:</td><td>'  + entry.username             + '</td></tr>'
+           + '<tr valign="top"><td>&nbsp;&nbsp;protocol:</td><td>'  + entry.authParams.protocol  + '</td></tr>'
+           + '<tr valign="top"><td>&nbsp;&nbsp;hash:</td><td>'      + entry.authParams.hash      + '</td></tr>'
+           + '<tr valign="top"><td></td>                      <td>' + '&nbsp;'                   + '</td></tr>'
+           + '<tr valign="top"><td></td>                      <td>'
+           + '<tr valign="top"><td></td>                      <td>'
+           + '<tr valign="top"><td></td>                      <td>'
+           + '<tr valign="top"><td></td>                      <td>'
+           +     '<form onsubmit="return validate_delete_username(\'' + entry.username + '\');" action="#">'
+           +     '<input type="submit" value="Delete" /></td>'
+           +     '</form>'                                                                       + '</td></tr>';
+  }
+
+  return '<tr><td colspan="3"><hr/></td></tr>'
+         + '<tr valign="top">'
+         + '<td rowspan="8"><img width="166" height="166" src="'  + entry.qrcodeURL + '" />       </td>'
+         +                  '<td>&nbsp;&nbsp;UUID:</td>     <td>' + entry.uuid                 + '</td></tr>'
+         + '<tr valign="top"><td>&nbsp;&nbsp;protocol:</td><td>'  + entry.authParams.protocol  + '</td></tr>'
+         + '<tr valign="top"><td>&nbsp;&nbsp;algorithm:</td><td>' + entry.authParams.algorithm + '</td></tr>'
+         + '<tr valign="top"><td>&nbsp;&nbsp;base32:</td>   <td>' + entry.authParams.base32    + '</td></tr>'
+         + '<tr valign="top"><td>&nbsp;&nbsp;step:</td>     <td>' + entry.authParams.step      + '</td></tr>'
+         + '<tr valign="top"><td>&nbsp;&nbsp;labels:</td>   <td>' + (entry.labels || '')       + '</td></tr>'
+         + '<tr valign="top"><td></td>                      <td>' + '&nbsp;'                   + '</td></tr>'
+         + '<tr valign="top"><td></td>                      <td>'
+         +     '<form onsubmit="return validate_delete_uuid(\'' + entry.uuid + '\');" action="#">'
+         +     '<input type="submit" value="Delete" /></td>'
+         +     '</form>'                                                                       + '</td></tr>';
+};
+
+var validate_create_uuid = function() {
+  var create   = document.forms.createUUIDForm
+    , label    = create.label.value
+    , uuid     = create.uuid.value
+    ;
+
+  if (!!label) label = label.replace(/^\s+|\s+$/g, '');
+  if ((!label) || (label.length < 2) || (label.indexOf('&') !== -1)) return oops('invalid label parameter');
+
+  if (!!uuid) uuid = uuid.replace(/^\s+|\s+$/g, '');
+  if ((!uuid) || (uuid.length < 32) || (uuid.indexOf('&') !== -1)) return oops('invalid UUID parameter');
+
+  roundtrip('action=create&uuid=' + uuid + '&label=' + label, function(results) {
+    var entry, key, text;
+
+    if (!!results.error) return oops(results.error.diagnostic);
+    entry = results.result.entry;
+
+    text = '';
+    text += entry_text(entry);
+    delete(entries[entry.uuid]);
+    for (key in entries) if (entries.hasOwnProperty(key)) text += entry_text(entries[key]);
+    entries[entry.uuid] = entry;
+    document.getElementById('entries').innerHTML =
+        '<font size="+2"><strong>Entries:</strong></font><br/><table>' + text + '</table>';
+    oops('created.');
+  });
+  oops('creating...');
+
+  return false;
+};
+
+var validate_delete_uuid = function(uuid) {
+  roundtrip('action=delete&uuid='+uuid, function(results) {
+    if (!!results.error) return oops(results.error.diagnostic);
+
+    entries = results.result.entries;
+    entries_text();
+  });
+  oops('deleting...');
+
+  return false;
+};
+
+var validate_create_username = function() {
+  var create   = document.forms.createUsernameForm
+    , password = create.password.value
+    , username = create.username.value
+    ;
+
+  if (!!username) username = username.replace(/^\s+|\s+$/g, '');
+  if ((!username) || (username.indexOf('#') !== -1) || (username.indexOf('+') !== -1) || (username.indexOf('*') !== -1))
+    return oops('invalid USERNAME parameter');
+  if (!!password) password = password.replace(/^\s+|\s+$/g, '');
+  if ((!password) || (password.length < 12)) return oops('invalid PASSWORD parameter');
+
+  roundtrip('action=adduser&username=' + username + '&password=' + password, function(results) {
+    var entry, key, text;
+
+    if (!!results.error) return oops(results.error.diagnostic);
+    entry = results.result.entry;
+
+    text = '';
+    text += entry_text(entry);
+    delete(entries[entry.username]);
+    for (key in entries) if (entries.hasOwnProperty(key)) text += entry_text(entries[key]);
+    entries[entry.username] = entry;
+    document.getElementById('entries').innerHTML =
+        '<font size="+2"><strong>Entries:</strong></font><br/><table>' + text + '</table>';
+    oops('created.');
+  });
+  oops('creating...');
+
+  return false;
+};
+
+var validate_delete_username = function(username) {
+  roundtrip('action=deluser&username='+username, function(results) {
+    if (!!results.error) return oops(results.error.diagnostic);
+
+    entries = results.result.entries;
+    entries_text();
+  });
+  oops('deleting...');
+
+  return false;
+};
+
+var clear = function() {
+  document.getElementById('status').innerHTML = '';
+};
+
+var oops = function(message) {
+  document.getElementById('status').innerHTML = '<font color="red">' + message + '</font>';
+  return false;
+};
+</script>
+</head>
+
+<body onload='main();'>
+<div id='form'>
+<table>
+
+<tr><td>
+<form name='createUUIDForm' onsubmit='return validate_create_uuid();' action='#'>
+<table>
+<tr><td>UUID:</td>
+    <td><input type='text'   name='uuid'    size='36' /></td>
+    <td></td>
+</tr>
+<tr><td>Label:</td>
+    <td><input type='text'   name='label'    size='36' /></td>
+    <td></td>
+</tr>
+<tr><td></td>
+    <td><input type='submit' value='Create Steward' /></td>
+    <td></td>
+</tr>
+</table>
+</form>
+</td><td>&nbsp;&nbsp;&nbsp;</td><td>
+<form name='createUsernameForm' onsubmit='return validate_create_username();' action='#'>
+<table>
+<tr><td>Username:</td>
+    <td><input type='text'   name='username' size='36' /></td>
+    <td></td>
+</tr>
+<tr><td>Password:</td>
+    <td><input type='text'   name='password' size='36' /></td>
+    <td></td>
+</tr>
+<tr><td></td>
+    <td><input type='submit' value='Create User' /></td>
+    <td></td>
+</tr>
+</table>
+</form>
+</td></tr>
+
+<tr><td></td>
+    <td colspan='2'><div id='status'></td></td>
+</tr>
+
+</table>
+<br/><br/>
+</div>
+
+<div id='entries'>
+</div>
+</div>
+</body>
+</html>
