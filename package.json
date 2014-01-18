@@ -28,7 +28,7 @@
   , "redis"        : "0.8.x"
   , "speakeasy"    : "git://github.com/TheThingSystem/speakeasy.git"
   , "winston"      : "0.7.x"
-  , "x509-keygen"  : "git://github.com/TheThingSystem/x509-keygen.git"
+  , "x509-keygen"  : "git://github.com/TheThingSystem/node-x509-keygen.git"
   }
 , "readmeFilename" : "README.md"
 }
