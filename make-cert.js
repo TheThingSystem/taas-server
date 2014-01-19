@@ -2,7 +2,7 @@ var keygen    = require('x509-keygen').x509_keygen
   , options   = require('./vps').options
   ;
 
-keygen({ subject    : '/CN=' + options.taasHost
+keygen({ subject    : '/CN=' + options.namedServers
        , keyfile    : 'registrar.key'
        , certfile   : 'registrar.crt'
        , alternates : [ 'IP:'    + options.taasHost

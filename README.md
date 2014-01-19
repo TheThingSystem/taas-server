@@ -56,10 +56,16 @@ then the TAAS service listens on IP address 'a.b.c.d' for port 'q' and sends a 3
         HTTP/1.1 307
         Location: https://a.b.c.d:q
 
+    or
+
+        HTTP/1.1 307
+        Location: https://taas.example.com:q
+
     The mobile client, upon receiving the 307 response,
-immediately establishes a TCP connection to IP address 'a.b.c.d' port 'q' and then begins sending traffic.
+immediately establishes a TCP connection to IP address 'a.b.c.d' (or host 'taas.example.com') port 'q'
+and then begins sending traffic.
 (If an error occurs, the TAAS service returns a 4xx or 5xx response and closes the connection.)
-The TAAS service will accept multiple connections to IP address 'a.b.c.d' port 'p'.
+The TAAS service will accept multiple connections to port 'q'.
 
 6. The hidden server, in addition to processing any data on the connection,
 may make additional HTTPS connections to the TAAS service (cf., Step 2).

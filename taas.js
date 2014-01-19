@@ -256,7 +256,7 @@ var client = function(options, httpsT, tag, host, request, response) {
 
       socket.pipe(responder.socket).pipe(socket);
     }).listen(portno, options.taasHost, 511, function () {
-      var location = httpsT + '://' + options.taasHost + ':' + portno;
+      var location = httpsT + '://' + host + ':' + portno;
 
       if (!!u.pathname) location += u.pathname;
       if (!!u.hash)     location += u.hash;
