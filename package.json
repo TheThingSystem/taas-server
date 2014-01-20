@@ -1,6 +1,6 @@
 {
   "name"           : "TAAS-server"
-, "version"        : "0.3.1"
+, "version"        : "0.3.2"
 , "description"    : "Things-as-a-service for 'hidden servers' (behind firewalls/NATs) and 'mobile clients' using a third-party service"
 , "author"         : {
     "name"         : "Marshall Rose"

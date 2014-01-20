@@ -5,6 +5,7 @@ var keygen    = require('x509-keygen').x509_keygen
 keygen({ subject    : '/CN=' + options.namedServers
        , keyfile    : 'registrar.key'
        , certfile   : 'registrar.crt'
+       , sha1file   : 'registrar.sha1'
        , alternates : [ 'IP:'    + options.taasHost
                       , 'DNS:'   + options.namedRegistrar
                       , 'DNS:*.' + options.namedServers

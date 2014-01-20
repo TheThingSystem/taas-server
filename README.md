@@ -207,7 +207,7 @@ extract it, and then:
 
         % node make-cert.js
 
-        % chmod  a-w registrar.key registrar.crt
+        % chmod  a-w registrar.*
 
         % chmod go-r registrar.key
 
