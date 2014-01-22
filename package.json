@@ -1,5 +1,5 @@
 {
-  "name"           : "TAAS-server"
+  "name"           : "taas-server"
 , "version"        : "0.3.2"
 , "description"    : "Things-as-a-service for 'hidden servers' (behind firewalls/NATs) and 'mobile clients' using a third-party service"
 , "author"         : {
@@ -8,10 +8,10 @@
   }
 , "repository"     : {
     "type"         : "git"
-  , "url"          : "https://github.com/TheThingSystem/TAAS-server.git"
+  , "url"          : "https://github.com/TheThingSystem/taas-server.git"
   }
 , "bugs"           : {
-    "url"          : "https://github.com/TheThingSystem/TAAS-server/issues"
+    "url"          : "https://github.com/TheThingSystem/taas-server/issues"
   }
 , "keywords"       : [ "nat", "cloud", "taas", "rendezvous" ]
 , "engines"        : {
