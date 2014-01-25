@@ -42,7 +42,7 @@ options.lookup = function(options, params, cb) {
   if (params.response.length < 6) return cb(new Error('response too short'));
 
   client.get(params.username, function(err, reply) {
-    var entry, i, now, otparams;
+    var entry, i, label, labels, now, otparams, portno, x;
 
     if (err) return cb(err);
     if (reply === null) return cb(new Error('no such entry'));
@@ -58,9 +58,22 @@ options.lookup = function(options, params, cb) {
                , encoding : 'base32'
                , step     : entry.authParams.step
                };
+
+    labels = {};
+    for (i = 0; i < entry.labels.length; i++) {
+      label = entry.labels[i];
+      x = label.indexOf(':');
+      if (x !== -1) {
+        portno = label.substring(x + 1);
+        label = label.substring(0, x);
+      } else portno = 0;
+
+      labels[label] = portno;
+    }
+
     for (i = 0; i < now.length; i++) {
       otparams.time = now[i];
-      if (speakeasy.totp(otparams) === params.response.toString()) return cb(null, entry.labels);
+      if (speakeasy.totp(otparams) === params.response.toString()) return cb(null, labels);
     }
     cb(new Error('authentication mismatch'));
   });

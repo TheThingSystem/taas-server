@@ -13,6 +13,7 @@ var http       = require('http')
 var maxport    = 1025;
 var pairings   = {};
 var responders = {};
+var listeners  = {};
 
 exports.listen = function(options) {
   var host, httpsT, server;
@@ -36,7 +37,7 @@ exports.listen = function(options) {
 
     host = request.headers.host;
     x = host.indexOf(':');
-    if (x > 0) host = host.substring(0,x);
+    if (x !== -1) host = host.substring(0, x);
 
     if (host !== options.namedRegistrar) return client(options, httpsT, tag, host, request, response);
 
@@ -79,7 +80,7 @@ exports.listen = function(options) {
     }
 
     options.lookup(options, params, function(err, labels) {
-      var label, x;
+      var label;
 
       if (err) {
         options.logger.info(tag, { event: err.message, code: 400, authorization: request.headers.authorization });
@@ -88,15 +89,14 @@ exports.listen = function(options) {
       }
 
       if (request.method === 'GET') {
-      if (pathname.indexOf('/pairings/') !== 0) {
+        if (pathname.indexOf('/pairings/') !== 0) {
           options.logger.info(tag, { event: 'invalid path', code: 404, path: pathname });
           response.writeHead(404);
           return response.end();
         }
 
         label = pathname.substring(10);
-        x = labels.indexOf(label);
-        if (x < 0) {
+        if (!labels[label]) {
           options.logger.info(tag, { event: 'invalid path', code: 404, label: label });
           response.writeHead(404);
           return response.end();
@@ -118,8 +118,7 @@ exports.listen = function(options) {
       }
 
       label = pathname.substring(10);
-      x = labels.indexOf(label);
-      if (x < 0) {
+      if (typeof labels[label] === 'undefined') {
         options.logger.info(tag, { event: 'invalid path', code: 404, label: label });
         response.writeHead(404);
         return response.end();
@@ -168,6 +167,7 @@ exports.listen = function(options) {
             try { (responders[label].shift()).socket.destroy(); } catch(ex) {}
           }
           responders[label].push({ socket: socket, tag: tag });
+          if ((labels[label] !== 0) && (!listeners[label])) listeners[label] = listener(options, label, labels[label]);
 
           socket.setNoDelay(true);
           socket.setKeepAlive(true);
@@ -206,6 +206,35 @@ exports.listen = function(options) {
     options.logger.info('listening on http' + ((!!options.keyData) ? 's' : '') + '://' + options.taasHost + ':'
                         + options.taasPort);
   });
+};
+
+var listener = function(options, label, portno) {
+  var plug;
+
+  plug = net.createServer({ allowHalfOpen: true }, function(socket) {
+    var responder, tag;
+
+    tag = 'tcp ' + socket.remoteAddress + ' ' + socket.remotePort;
+
+    responder = responders[label].shift();
+    if (!responder) {
+      options.logger.error(tag, { event: 'no responder', label: label });
+      return socket.destroy();
+    }
+
+    socket.setNoDelay(true);
+    socket.setKeepAlive(true);
+
+    if (!pairings[label]) pairings[label] = [];
+    pairings[label].push({ responder: responder.tag, initiator: tag, timestamp: new Date().getTime() });
+    if (pairings[label].length > 100) pairings[label].splice(0,100);
+
+    socket.pipe(responder.socket).pipe(socket);
+  }).listen(portno, options.taasHost, 511, function () {
+    options.logger.info('listening on tcp://' + options.taasHost + ':' + portno + ' for ' + label);
+  });
+
+  return plug;
 };
 
 var client = function(options, httpsT, tag, host, request, response) {
@@ -277,9 +306,11 @@ var subdomainP = function(options, domain) {
   return domain.substring(0, x);
 };
 
+// we are reserving ports 62050..65534 for "fixed" ports
+
 var nextPort = function(lastPort) {
   maxport = lastPort + 1;
 
-  if ((maxport < 1025) || (maxport > 63000)) maxport = 1025;
+  if ((maxport < 1025) || (maxport > 60000)) maxport = 1025;
   maxport += Math.round(Math.random() * 2048);
 };

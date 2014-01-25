@@ -1,6 +1,6 @@
 {
   "name"           : "taas-server"
-, "version"        : "0.3.2"
+, "version"        : "0.4.0"
 , "description"    : "Things-as-a-service for 'hidden servers' (behind firewalls/NATs) and 'mobile clients' using a third-party service"
 , "author"         : {
     "name"         : "Marshall Rose"
@@ -28,7 +28,7 @@
   , "redis"        : "0.8.x"
   , "speakeasy"    : "git://github.com/TheThingSystem/speakeasy.git"
   , "winston"      : "0.7.x"
-  , "x509-keygen"  : "git://github.com/TheThingSystem/node-x509-keygen.git"
+  , "x509-keygen"  : "0.2.2"
   }
 , "readmeFilename" : "README.md"
 }
