@@ -1,3 +1,5 @@
+.DS_Store
+
 lib-cov
 *.seed
 *.log
@@ -19,6 +21,7 @@ debug.js
 *.mqtc
 
 *.db
+*.crt
 registrar.*
 steward.js
 vps.js

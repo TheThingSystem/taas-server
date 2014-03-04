@@ -283,36 +283,36 @@ var create_username = function(label, username, password, cb) {
       if (err) return;
 
       config = { '_type'         : 'configuration'
-               , deviceid        : parts.slice(2).join('/')
+               , deviceid        : ''
 
-               , mindist         : '200'
-               , mintime         : '180'
+               , mindist         : 200
+               , mintime         : 180
 
                , clientid        : parts.slice(1).join('/')
                , host            : parts[1] + '.' + options.namedServers
-               , port            : '8883'
-               , tls             : '1'
-               , auth            : '1'
+               , port            : 8883
+               , tls             : true
+               , auth            : true
                , user            : username
                , pass            : password
 
-               , ab              : '0'
+               , ab              : true
                , subscription    : parts.slice(0,2).join('/') + '/#'
-               , subscriptionqos : '1'
+               , subscriptionqos : 1
 
                , topic           : username
-               , qos             : '1'
-               , retain          : '1'
+               , qos             : 1
+               , retain          : true
 
-               , clean           : '0'
-               , keepalive       : '60'
+               , clean           : false
+               , keepalive       : 60
 
                , willtopic       : ''
                , will            : 'lwt'
-               , willqos         : '1'
-               , willretain      : '0'
+               , willqos         : 1
+               , willretain      : false
 
-               , monitoring      : '2'
+               , monitoring      : 2
                };
 
       fs.writeFile(parts.join('_') + '.mqtc', JSON.stringify(config), { mode: 0644 }, function(err) {
